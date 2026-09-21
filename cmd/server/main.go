@@ -353,12 +353,9 @@ func saveConfig(raw []byte, path string, live *livecfg.Holder, p *pool.Pool, up 
 	if err != nil {
 		return nil, fmt.Errorf("marshal config: %w", err)
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o600); err != nil {
+	// 如果目标是 bind mount 单文件，os.Rename 会报 resource busy；直接 WriteFile 覆盖
+	if err := os.WriteFile(path, out, 0o666); err != nil {
 		return nil, fmt.Errorf("write config: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return nil, fmt.Errorf("replace config: %w", err)
 	}
 
 	// 4) 热应用：能立即生效的字段全部应用，并列出仍需重启的字段。
